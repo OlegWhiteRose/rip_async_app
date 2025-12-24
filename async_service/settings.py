@@ -51,7 +51,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'async_service.wsgi.application'
 
-# Без базы данных - сервис stateless
 DATABASES = {}
 
 LANGUAGE_CODE = 'ru-ru'

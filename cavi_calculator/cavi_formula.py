@@ -1,7 +1,3 @@
-"""
-Формула расчёта индекса CAVI (Cardio-Ankle Vascular Index).
-Реализация аналогична Go версии в RIP_2025.
-"""
 import math
 from typing import Optional
 
@@ -25,19 +21,6 @@ def calculate_cavi(
     diastolic_pressure: int,
     pulse_wave_velocity: float
 ) -> float:
-    """
-    Рассчитывает индекс CAVI по формуле.
-    
-    Args:
-        age_group: Возрастная группа (young, middle, elderly)
-        disease_type: Тип заболевания (diabetes, hypertension, None)
-        systolic_pressure: Систолическое давление (мм рт.ст.)
-        diastolic_pressure: Диастолическое давление (мм рт.ст.)
-        pulse_wave_velocity: Скорость пульсовой волны (м/с)
-    
-    Returns:
-        Рассчитанный индекс CAVI
-    """
     if systolic_pressure == 0 or diastolic_pressure == 0 or pulse_wave_velocity == 0:
         return 0.0
     
@@ -66,7 +49,6 @@ def calculate_cavi(
     # Разница давлений
     dp = ps - pd
     
-    # Формула CAVI: M * (2 * rho / dp) * ln(ps/pd) * pwv^2 + A
     cavi = M * (2 * RHO / dp) * math.log(ps / pd) * (pwv ** 2) + A
     
     return round(cavi, 3)

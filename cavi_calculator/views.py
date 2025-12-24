@@ -16,48 +16,8 @@ from .cavi_formula import calculate_cavi
 
 logger = logging.getLogger(__name__)
 
-
-class HealthCheckView(APIView):
-    """Проверка работоспособности сервиса."""
-    
-    def get(self, request):
-        return Response({
-            'status': 'ok',
-            'service': 'cavi-async-calculator',
-            'version': '1.0.0'
-        })
-
-
 class CalculateCAVIView(APIView):
-    """
-    Асинхронный расчёт CAVI индекса.
-    
-    POST /api/calculate
-    
-    Принимает данные о заявке и группах, запускает расчёт в фоне
-    с задержкой 5-10 секунд, затем отправляет результаты в Go бекенд.
-    """
-    
     def post(self, request):
-        """
-        Запуск асинхронного расчёта CAVI.
-        
-        Request body:
-        {
-            "calculation_id": 1,
-            "systolic_pressure": 120,
-            "diastolic_pressure": 80,
-            "pulse_wave_velocity": 8.5,
-            "groups": [
-                {
-                    "group_id": 1,
-                    "age_group": "young",
-                    "disease_type": null
-                },
-                ...
-            ]
-        }
-        """
         data = request.data
         
         # Валидация входных данных
@@ -66,7 +26,7 @@ class CalculateCAVIView(APIView):
         for field in required_fields:
             if field not in data:
                 return Response(
-                    {'status': 'error', 'message': f'Missing required field: {field}'},
+                    {'message': 'failed'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
         
@@ -78,7 +38,7 @@ class CalculateCAVIView(APIView):
         
         if not groups:
             return Response(
-                {'status': 'error', 'message': 'No groups provided'},
+                {'message': 'failed'},
                 status=status.HTTP_400_BAD_REQUEST
             )
         
@@ -91,17 +51,10 @@ class CalculateCAVIView(APIView):
         thread.start()
         
         return Response({
-            'status': 'accepted',
-            'message': 'Calculation started',
-            'calculation_id': calculation_id,
-            'groups_count': len(groups)
+            'message': 'calculation started'
         }, status=status.HTTP_202_ACCEPTED)
     
     def _process_calculation(self, calculation_id, systolic, diastolic, pwv, groups):
-        """
-        Фоновый процесс расчёта CAVI.
-        Выполняется с задержкой, затем отправляет результаты в Go бекенд.
-        """
         # Случайная задержка 5-10 секунд
         delay = random.randint(
             settings.CALCULATION_DELAY_MIN,
@@ -137,11 +90,7 @@ class CalculateCAVIView(APIView):
         self._send_results_to_backend(calculation_id, results)
     
     def _send_results_to_backend(self, calculation_id, results):
-        """
-        Отправка результатов расчёта в Go бекенд.
-        Включает groups_count для обновления в cavi_calculations.
-        """
-        url = f"{settings.GO_BACKEND_URL}/api/cavi-calculations/{calculation_id}/async-result"
+        url = f"{settings.GO_BACKEND_URL}/api/cavi-calculations/{calculation_id}/result"
         
         payload = {
             'token': settings.GO_BACKEND_TOKEN,
